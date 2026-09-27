@@ -6,8 +6,8 @@ use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\TagsInput;
-use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
@@ -85,7 +85,7 @@ class AnimeForm
                             ->numeric()
                             ->minValue(0)
                             ->maxValue(10)
-                            ->step(0.1),
+                            ->step(0.01),
                         TextInput::make('vote_count')
                             ->numeric()
                             ->minValue(0),

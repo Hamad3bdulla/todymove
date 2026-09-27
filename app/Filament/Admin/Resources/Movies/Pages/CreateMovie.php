@@ -3,12 +3,14 @@
 namespace App\Filament\Admin\Resources\Movies\Pages;
 
 use App\Filament\Admin\Resources\Movies\MovieResource;
+use App\Models\Movie;
 use App\Services\TmdbService;
 use Filament\Actions\Action;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Contracts\View\View;
 use Illuminate\Support\Carbon;
+use Illuminate\Validation\ValidationException;
 
 class CreateMovie extends CreateRecord
 {
@@ -237,5 +239,42 @@ class CreateMovie extends CreateRecord
             'trailer_youtube_key' => $trailerKey,
             'fetched_at' => now()->toDateTimeString(),
         ]);
+    }
+
+    protected function mutateFormDataBeforeCreate(array $data): array
+    {
+        $existingMovie = Movie::query()
+            ->when(
+                filled($data['tmdb_id'] ?? null),
+                fn ($query) => $query->where('tmdb_id', (int) $data['tmdb_id'])
+            )
+            ->when(
+                blank($data['tmdb_id'] ?? null) && filled($data['title'] ?? null),
+                fn ($query) => $query->whereRaw('LOWER(title) = LOWER(?)', [trim((string) $data['title'])])
+            )
+            ->first();
+
+        if ($existingMovie) {
+            Notification::make()
+                ->warning()
+                ->title('هذا الفيلم أو المسلسل موجود مسبقاً')
+                ->body('تم العثور على سجل مطابق، ولم يتم إنشاء سجل مكرر.')
+                ->send();
+
+            throw ValidationException::withMessages([
+                'title' => ['هذا الفيلم أو المسلسل موجود مسبقاً.'],
+            ]);
+        }
+
+        return $data;
+    }
+
+    protected function onValidationError(ValidationException $exception): void
+    {
+        Notification::make()
+            ->danger()
+            ->title('تعذر إنشاء الفيلم أو المسلسل')
+            ->body('تحقق من الحقول التي تحتوي على أخطاء ثم حاول مرة أخرى.')
+            ->send();
     }
 }

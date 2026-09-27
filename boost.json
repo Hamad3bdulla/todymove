@@ -3,13 +3,18 @@
         "cursor",
         "opencode"
     ],
+    "cloud": true,
     "guidelines": true,
     "herd_mcp": false,
     "mcp": true,
     "sail": false,
     "skills": [
+        "infer-conventions",
+        "deploying-to-cloud",
+        "fortify-development",
+        "laravel-best-practices",
+        "testing-best-practices",
         "wayfinder-development",
-        "pest-testing",
         "inertia-react-development",
         "tailwindcss-development"
     ]

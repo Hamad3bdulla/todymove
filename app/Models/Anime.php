@@ -48,7 +48,7 @@ class Anime extends Model
         return [
             'genres' => 'array',
             'release_date' => 'date',
-            'vote_average' => 'decimal:1',
+            'vote_average' => 'decimal:2',
             'fetched_at' => 'datetime',
             'is_anime_of_week' => 'boolean',
         ];

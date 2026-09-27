@@ -2,8 +2,11 @@
 
 namespace App\Services;
 
+use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Fetch anime data from MyAnimeList via Jikan API v4 (https://jikan.moe/).
@@ -25,10 +28,22 @@ class MalService
         $cacheKey = "mal_anime_{$malId}";
 
         return Cache::remember($cacheKey, self::CACHE_TTL_SECONDS, function () use ($malId) {
-            $response = Http::get(self::BASE_URL."/anime/{$malId}");
+            try {
+                $response = Http::connectTimeout(5)
+                    ->timeout(15)
+                    ->retry(2, 250)
+                    ->get(self::BASE_URL."/anime/{$malId}");
+            } catch (ConnectionException|RequestException $exception) {
+                Log::warning('Unable to fetch anime data from Jikan.', [
+                    'mal_id' => $malId,
+                    'error' => $exception->getMessage(),
+                ]);
+
+                return $this->fetchFromMyAnimeListPage($malId);
+            }
 
             if (! $response->successful()) {
-                return null;
+                return $this->fetchFromMyAnimeListPage($malId);
             }
 
             $data = $response->json('data');
@@ -38,6 +53,73 @@ class MalService
 
             return $this->mapAnimeResponse($data);
         });
+    }
+
+    /**
+     * Use the public MyAnimeList page when Jikan cannot reach the record.
+     *
+     * @return array<string, mixed>|null
+     */
+    protected function fetchFromMyAnimeListPage(int $malId): ?array
+    {
+        try {
+            $response = Http::withHeaders([
+                'User-Agent' => 'Todymove/1.0',
+            ])
+                ->connectTimeout(5)
+                ->timeout(15)
+                ->get("https://myanimelist.net/anime/{$malId}");
+        } catch (ConnectionException|RequestException $exception) {
+            Log::warning('Unable to fetch anime data from MyAnimeList.', [
+                'mal_id' => $malId,
+                'error' => $exception->getMessage(),
+            ]);
+
+            return null;
+        }
+
+        if (! $response->successful()) {
+            return null;
+        }
+
+        $document = new \DOMDocument;
+        $previousErrorState = libxml_use_internal_errors(true);
+        $loaded = $document->loadHTML($response->body());
+        libxml_clear_errors();
+        libxml_use_internal_errors($previousErrorState);
+
+        if (! $loaded) {
+            return null;
+        }
+
+        $xpath = new \DOMXPath($document);
+        $title = $this->extractMetaContent($xpath, 'property', 'og:title');
+        if (blank($title)) {
+            return null;
+        }
+
+        return [
+            'mal_id' => $malId,
+            'title' => $title,
+            'poster_path' => $this->extractMetaContent($xpath, 'property', 'og:image'),
+            'backdrop_path' => null,
+            'overview' => $this->extractMetaContent($xpath, 'property', 'og:description'),
+            'release_date' => null,
+            'episodes_count' => null,
+            'genres' => [],
+            'vote_average' => null,
+            'vote_count' => null,
+            'trailer_youtube_key' => null,
+            'fetched_at' => now()->toDateTimeString(),
+        ];
+    }
+
+    protected function extractMetaContent(\DOMXPath $xpath, string $attribute, string $value): ?string
+    {
+        $nodes = $xpath->query(sprintf('//meta[@%s="%s"]/@content', $attribute, $value));
+        $content = $nodes?->item(0)?->nodeValue;
+
+        return filled($content) ? html_entity_decode(trim($content), ENT_QUOTES | ENT_HTML5) : null;
     }
 
     /**

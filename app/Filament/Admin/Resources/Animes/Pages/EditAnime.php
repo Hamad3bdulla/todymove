@@ -9,7 +9,6 @@ use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
-use Illuminate\Validation\ValidationException;
 
 class EditAnime extends EditRecord
 {
@@ -80,7 +79,7 @@ class EditAnime extends EditRecord
         return null;
     }
 
-    public function mount(int | string $record): void
+    public function mount(int|string $record): void
     {
         parent::mount($record);
 
@@ -104,14 +103,6 @@ class EditAnime extends EditRecord
 
     protected function mutateFormDataBeforeSave(array $data): array
     {
-        $sources = $data['videoSources'] ?? [];
-
-        if (count($sources) < 1) {
-            throw ValidationException::withMessages([
-                'videoSources' => ['أضف رابط مشاهدة واحد على الأقل.'],
-            ]);
-        }
-
         unset($data['videoSources']);
 
         return $data;

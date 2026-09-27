@@ -3,6 +3,7 @@
 namespace App\Filament\Admin\Resources\Animes\Pages;
 
 use App\Filament\Admin\Resources\Animes\AnimeResource;
+use App\Models\Anime;
 use App\Models\AnimeVideoSource;
 use App\Services\MalService;
 use Filament\Actions\Action;
@@ -80,17 +81,41 @@ class CreateAnime extends CreateRecord
 
     protected function mutateFormDataBeforeCreate(array $data): array
     {
-        $sources = $data['videoSources'] ?? [];
+        $existingAnime = Anime::query()
+            ->when(
+                filled($data['mal_id'] ?? null),
+                fn ($query) => $query->where('mal_id', (int) $data['mal_id'])
+            )
+            ->when(
+                blank($data['mal_id'] ?? null) && filled($data['title'] ?? null),
+                fn ($query) => $query->whereRaw('LOWER(title) = LOWER(?)', [trim((string) $data['title'])])
+            )
+            ->first();
 
-        if (count($sources) < 1) {
+        if ($existingAnime) {
+            Notification::make()
+                ->warning()
+                ->title('هذا الأنمي موجود مسبقاً')
+                ->body('تم العثور على سجل مطابق، ولم يتم إنشاء سجل مكرر.')
+                ->send();
+
             throw ValidationException::withMessages([
-                'videoSources' => ['أضف رابط مشاهدة واحد على الأقل.'],
+                'title' => ['هذا الأنمي موجود مسبقاً.'],
             ]);
         }
 
         unset($data['videoSources']);
 
         return $data;
+    }
+
+    protected function onValidationError(ValidationException $exception): void
+    {
+        Notification::make()
+            ->danger()
+            ->title('تعذر إنشاء الأنمي')
+            ->body('تحقق من الحقول التي تحتوي على أخطاء ثم حاول مرة أخرى.')
+            ->send();
     }
 
     protected function afterCreate(): void
