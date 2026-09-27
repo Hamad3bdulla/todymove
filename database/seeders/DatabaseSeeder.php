@@ -13,10 +13,13 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
+        User::updateOrCreate(
+            ['email' => 'bo3bdo@hotmail.com'],
+            [
+                'name' => 'Admin',
+                'password' => 'password',
+            ],
+        );
 
         $this->call(FilmNightSeeder::class);
     }
