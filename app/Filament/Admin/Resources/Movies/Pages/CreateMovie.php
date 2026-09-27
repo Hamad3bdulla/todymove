@@ -68,7 +68,8 @@ class CreateMovie extends CreateRecord
                 } else {
                     Notification::make()
                         ->danger()
-                        ->title('TV series not found for this link or ID')
+                        ->title('تعذر جلب بيانات المسلسل')
+                        ->body('تحقق من الرابط أو حاول مرة أخرى لاحقاً إذا كانت خدمة TMDB غير متاحة.')
                         ->send();
                 }
             } else {
@@ -82,7 +83,8 @@ class CreateMovie extends CreateRecord
                 } else {
                     Notification::make()
                         ->danger()
-                        ->title('Movie not found for this link or ID')
+                        ->title('تعذر جلب بيانات الفيلم')
+                        ->body('تحقق من الرابط أو حاول مرة أخرى لاحقاً إذا كانت خدمة TMDB غير متاحة.')
                         ->send();
                 }
             }
@@ -95,7 +97,8 @@ class CreateMovie extends CreateRecord
         if (count($results) === 0) {
             Notification::make()
                 ->danger()
-                ->title('No results found for "'.$input.'"')
+                ->title('لم يتم العثور على نتائج')
+                ->body('تحقق من اسم الفيلم أو المسلسل وحاول مرة أخرى.')
                 ->send();
 
             return;

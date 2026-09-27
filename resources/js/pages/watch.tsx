@@ -392,6 +392,8 @@ export default function Watch({
                                     <img
                                         src={movie.poster_url}
                                         alt={movie.title}
+                                        loading="eager"
+                                        decoding="async"
                                         className="relative w-full rounded-sm border border-border/50 object-cover shadow-lg lg:shadow-xl"
                                     />
                                 </div>

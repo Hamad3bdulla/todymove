@@ -380,6 +380,8 @@ export default function AnimeWatch({
                                     <img
                                         src={anime.poster_url}
                                         alt={anime.title}
+                                        loading="eager"
+                                        decoding="async"
                                         className="relative w-full rounded-sm border border-border/50 object-cover shadow-lg lg:shadow-xl"
                                     />
                                 </div>

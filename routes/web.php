@@ -27,15 +27,15 @@ Route::get('/sw.js', function () {
 })->name('sw');
 
 Route::get('/watch/{movie}', WatchController::class)->name('watch')->where('movie', '[0-9]+');
-Route::post('/watch/{movie}/comments', StoreMovieCommentController::class)->name('watch.comments.store')->where('movie', '[0-9]+');
-Route::post('/watch/{movie}/ratings', StoreMovieRatingController::class)->name('watch.ratings.store')->where('movie', '[0-9]+');
+Route::post('/watch/{movie}/comments', StoreMovieCommentController::class)->middleware('throttle:comments')->name('watch.comments.store')->where('movie', '[0-9]+');
+Route::post('/watch/{movie}/ratings', StoreMovieRatingController::class)->middleware('throttle:ratings')->name('watch.ratings.store')->where('movie', '[0-9]+');
 
 Route::get('/archive', ArchiveController::class)->name('archive');
 
 Route::get('/anime', AnimeOfWeekController::class)->name('anime');
 Route::get('/anime/{anime}', AnimeWatchController::class)->name('anime.watch')->where('anime', '[0-9]+');
-Route::post('/anime/{anime}/comments', StoreAnimeCommentController::class)->name('anime.comments.store')->where('anime', '[0-9]+');
-Route::post('/anime/{anime}/ratings', StoreAnimeRatingController::class)->name('anime.ratings.store')->where('anime', '[0-9]+');
+Route::post('/anime/{anime}/comments', StoreAnimeCommentController::class)->middleware('throttle:comments')->name('anime.comments.store')->where('anime', '[0-9]+');
+Route::post('/anime/{anime}/ratings', StoreAnimeRatingController::class)->middleware('throttle:ratings')->name('anime.ratings.store')->where('anime', '[0-9]+');
 
 Route::get('dashboard', function () {
     return Inertia::render('dashboard');

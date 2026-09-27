@@ -53,7 +53,8 @@ class CreateAnime extends CreateRecord
         if (! $data) {
             Notification::make()
                 ->danger()
-                ->title('Anime not found for this link or ID')
+                ->title('تعذر جلب بيانات الأنمي')
+                ->body('تحقق من الرابط أو حاول مرة أخرى لاحقاً إذا كانت خدمة MyAnimeList غير متاحة.')
                 ->send();
 
             return;
